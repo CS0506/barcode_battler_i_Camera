@@ -3,7 +3,7 @@ import { Header } from './components/Header';
 import { PromptInput } from './components/PromptInput';
 import { ResultDisplay } from './components/ResultDisplay';
 import { LoadingOverlay } from './components/LoadingOverlay';
-import { generateImage } from './services/geminiService';
+import { generateImage } from './services/huggingFaceService';
 
 const App: React.FC = () => {
   const [inputNumber, setInputNumber] = useState<string>('');
@@ -45,7 +45,7 @@ Base stats:
 The visual design should reflect these stats. A high HP character might be large and sturdy, while a high attack character could have prominent weapons or energy auras. The art style should be detailed digital painting, suitable for a fantasy game.`;
 
       const newImageBase64 = await generateImage(finalPrompt);
-      setGeneratedImageUrl(`data:image/png;base64,${newImageBase64}`);
+      setGeneratedImageUrl(newImageBase64);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
@@ -95,7 +95,7 @@ The visual design should reflect these stats. A high HP character might be large
         </div>
       </main>
       <footer className="text-center p-4 text-slate-500 text-sm">
-        Powered by Gemini 2.5 Flash Image
+        Powered by Hugging Face
       </footer>
     </div>
   );
