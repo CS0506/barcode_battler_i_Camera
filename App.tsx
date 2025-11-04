@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { PromptInput } from './components/PromptInput';
 import { ResultDisplay } from './components/ResultDisplay';
 import { LoadingOverlay } from './components/LoadingOverlay';
+import { BarcodeScanner } from './components/BarcodeScanner'; // Import the scanner
 import { generateImage } from './services/huggingFaceService';
 
 const App: React.FC = () => {
@@ -11,6 +12,7 @@ const App: React.FC = () => {
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [isScannerOpen, setScannerOpen] = useState<boolean>(false); // State for scanner modal
 
   const handleGenerateClick = useCallback(async () => {
     if (!inputNumber || !prompt) {
@@ -35,14 +37,7 @@ const App: React.FC = () => {
       const attack = parseInt(s.slice(3, 6), 10) * (1 + (num % 3));
       const defense = parseInt(s.slice(6, 9), 10) * (1 + (num % 4));
 
-      const finalPrompt = `Generate a fantasy character based on the following:
-Description: "${prompt}".
-This character is a powerful being derived from a unique numerical signature.
-Base stats:
-- HP: ${hp}
-- Attack: ${attack}
-- Defense: ${defense}
-The visual design should reflect these stats. A high HP character might be large and sturdy, while a high attack character could have prominent weapons or energy auras. The art style should be detailed digital painting, suitable for a fantasy game.`;
+      const finalPrompt = `Generate a fantasy character based on the following:\nDescription: "${prompt}".\nThis character is a powerful being derived from a unique numerical signature.\nBase stats:\n- HP: ${hp}\n- Attack: ${attack}\n- Defense: ${defense}\nThe visual design should reflect these stats. A high HP character might be large and sturdy, while a high attack character could have prominent weapons or energy auras. The art style should be detailed digital painting, suitable for a fantasy game.`;
 
       const newImageBase64 = await generateImage(finalPrompt);
       setGeneratedImageUrl(newImageBase64);
@@ -54,23 +49,39 @@ The visual design should reflect these stats. A high HP character might be large
     }
   }, [inputNumber, prompt]);
 
+  // Handler for when the scanner gets a result
+  const handleScan = (result: string) => {
+    setInputNumber(result);
+    setScannerOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans">
       <Header />
       {isLoading && <LoadingOverlay />}
+      {isScannerOpen && <BarcodeScanner onScan={handleScan} onClose={() => setScannerOpen(false)} />}
+
       <main className="flex-grow container mx-auto p-4 md:p-8 flex flex-col items-center">
         <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Controls Column */}
           <div className="bg-slate-800/50 rounded-2xl p-6 shadow-2xl border border-slate-700 flex flex-col gap-6 h-fit">
             <h2 className="text-2xl font-bold text-cyan-400">1. Enter Number</h2>
-            <input
-                type="text"
-                value={inputNumber}
-                onChange={(e) => setInputNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="e.g., 8005123456789"
-                className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-300 text-slate-100 placeholder-slate-400 text-lg tracking-wider"
-                maxLength={13}
-            />
+            <div className="relative w-full">
+              <input
+                  type="text"
+                  value={inputNumber}
+                  onChange={(e) => setInputNumber(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="e.g., 8005123456789"
+                  className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors duration-300 text-slate-100 placeholder-slate-400 text-lg tracking-wider"
+                  maxLength={13}
+              />
+              <button 
+                onClick={() => setScannerOpen(true)}
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-xs bg-cyan-600 hover:bg-cyan-500 text-white py-1 px-3 rounded-full transition-colors"
+              >
+                Scan
+              </button>
+            </div>
 
             <h2 className="text-2xl font-bold text-cyan-400 mt-4">2. Describe Character</h2>
             <PromptInput prompt={prompt} setPrompt={setPrompt} />
